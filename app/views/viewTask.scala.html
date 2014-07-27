@@ -1,0 +1,8 @@
+@import us.bleibinha.dorloch.model.Task
+
+@(task: Task)
+
+<ul>
+    <h1><a href="/task/@task.id">@task.title (@task.id)</a></h1>
+    <span>@task.description</span>
+</ul>

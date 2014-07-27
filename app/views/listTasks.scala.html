@@ -4,6 +4,6 @@
 
 <ul>
 @for(task <- tasks) {
-    <li>@task.title</li>
+    <li><a href="/task/@task.id">@task.title</a></li>
 }
 </ul>

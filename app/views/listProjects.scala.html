@@ -1,0 +1,12 @@
+@import us.bleibinha.dorloch.model.Project
+
+@(projects: List[Project])
+
+<ul>
+@for(project <- projects) {
+    <li>
+        <a href="/project/@project.id">@project.title</a>:
+        @listTasks(project.tasks)
+    </li>
+}
+</ul>
