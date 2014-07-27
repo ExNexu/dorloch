@@ -6,8 +6,8 @@ import us.bleibinha.dorloch.model.{Id, Project, Task}
 
 object Application extends Controller {
 
-  val task1 = Task(1L, "Task 1", Some("Some description"))
-  val project1 = Project(1L, "Project 1", None, List(task1))
+  val task1 = Task(None, "Task 1", Some("Some description"))
+  val project1 = Project(None, "Project 1", None, List())
 
   def index = Action {
     Ok(views.html.index(List(project1)))
