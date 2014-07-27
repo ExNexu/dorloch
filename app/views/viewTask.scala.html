@@ -2,7 +2,9 @@
 
 @(task: Task)
 
-<ul>
-    <h1><a href="/task/@task.id">@task.title (@task.id)</a></h1>
-    <span>@task.description</span>
-</ul>
+@main(task.title) {
+    <ul>
+        <h1><a href="/task/@task.id">@task.title (@task.id)</a></h1>
+        <span>@task.description</span>
+    </ul>
+}

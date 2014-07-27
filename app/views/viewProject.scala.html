@@ -2,9 +2,11 @@
 
 @(project: Project)
 
-<ul>
-    <h1><a href="/project/@project.id">@project.title (@project.id)</a></h1>
-    <span>@project.description</span>
-    <h2>Tasks</h2>
-    @listTasks(project.tasks)
-</ul>
+@main(project.title) {
+    <ul>
+        <h1><a href="/project/@project.id">@project.title (@project.id)</a></h1>
+        <span>@project.description</span>
+        <h2>Tasks</h2>
+        @listTasks(project.tasks)
+    </ul>
+}
