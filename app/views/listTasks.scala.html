@@ -2,6 +2,8 @@
 
 @(tasks: List[Task])
 
-@main("Dorloch") {
-    @listTasks(tasks)
+<ul>
+@for(task <- tasks) {
+    <li>@task.title</li>
 }
+</ul>
