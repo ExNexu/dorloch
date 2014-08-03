@@ -7,7 +7,7 @@ import scala.concurrent.Future
 import scala.pickling._
 import scala.pickling.json._
 
-object ProjectSerializeStrategy extends SerializeStrategy[Project] {
+class ProjectSerializeStrategy(redis: Redis) extends SerializeStrategy[Project] {
 
   override def removalIndices(obj: Project): List[(Key, Option[Id])] =
     (tasksKey(obj.id.get), None) :: Nil
@@ -16,10 +16,10 @@ object ProjectSerializeStrategy extends SerializeStrategy[Project] {
     val id = obj.id.get
 
     def tasksFn: Future[List[Task]] = {
-      val taskIds = Redis.getIdsFromIndex(tasksKey(id))
+      val taskIds = redis.getIdsFromIndex(tasksKey(id))
       taskIds flatMap { taskIds =>
         val taskOptions = Future.traverse(taskIds) { taskId =>
-          Redis.get[Task](taskId)
+          redis.get[Task](taskId)
         }
         taskOptions map (_.flatten)
       }

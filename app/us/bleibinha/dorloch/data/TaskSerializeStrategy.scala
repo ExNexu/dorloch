@@ -2,11 +2,11 @@ package us.bleibinha.dorloch.data
 
 import us.bleibinha.dorloch.model._
 
-object TaskSerializeStrategy extends SerializeStrategy[Task] {
+class TaskSerializeStrategy(projectSerializeStrategy: ProjectSerializeStrategy) extends SerializeStrategy[Task] {
   override def indexUpdates(obj: Task): List[(Key, Boolean)] = {
     val projectId = obj.projectId
 
-    (ProjectSerializeStrategy.tasksKey(projectId), false) ::
+    (projectSerializeStrategy.tasksKey(projectId), false) ::
       Nil
   }
 

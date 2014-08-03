@@ -10,28 +10,28 @@ import scala.pickling.json._
 
 object Application extends Controller {
 
-  val project1Base = Project("Project 1")
-  val project1 = Redis.save(project1Base)
-  project1 map { project1 =>
-    val task1 = Task(project1.id.get, "Task 1", Some("Some description"))
-    Redis.save(task1) map { _ =>
-      val proj = Redis.get[Project](project1.id.get)
-      proj map println
-      proj map (_.map(_.tasks map println))
-    }
-  }
-
   def index = Action {
     Ok(views.html.index(Nil))
   }
 
-  def project(id: Id) =  Action {
-    //Ok(views.html.viewProject(null))
-    Ok(views.html.index(Nil))
+  def project(id: Id) = Action.async {
+    Redis.get[Project](id) map { projectOption =>
+      projectOption.fold(
+        Ok(views.html.index(Nil))
+      )(project =>
+        Ok(views.html.viewProject(project))
+        )
+    }
   }
-  def task(id: Id) = Action {
-    //Ok(views.html.viewTask(null))
-    Ok(views.html.index(Nil))
+
+  def task(id: Id) = Action.async {
+    Redis.get[Task](id) map { taskOption =>
+      taskOption.fold(
+        Ok(views.html.index(Nil))
+      )(task =>
+        Ok(views.html.viewTask(task))
+        )
+    }
   }
 
 }

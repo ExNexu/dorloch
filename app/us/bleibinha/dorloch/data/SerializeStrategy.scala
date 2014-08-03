@@ -15,6 +15,11 @@ trait SerializeStrategy[T <: Model[T]] {
   def enrichObject(obj: T) = obj
 }
 
+object SerializeStrategy {
+  implicit val projectSerializeStrategy = new ProjectSerializeStrategy(Redis)
+  implicit val taskSerializeStrategy = new TaskSerializeStrategy(projectSerializeStrategy)
+}
+
 
 
 

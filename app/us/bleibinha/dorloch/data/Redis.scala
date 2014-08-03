@@ -11,9 +11,10 @@ import scala.concurrent.Future
 import scala.pickling._
 import scala.pickling.json._
 
-object Redis {
-  private val client = RedisClient()(system)
-  private val applicationString = "dorloch"
+trait Redis {
+  protected implicit val akkaSystem = system
+  protected val applicationString = "dorloch"
+  protected val client = RedisClient()
 
   def save[T <: Model[T] : SerializeStrategy : FastTypeTag : SPickler : Unpickler](obj: T): Future[T] = {
     val serializeStrategy = implicitly[SerializeStrategy[T]]
@@ -26,7 +27,7 @@ object Redis {
     }
     val id = objWithId.id.get
 
-    val saveResult = client.set(s"$applicationString:$id", objWithId)
+    val saveResult = client.set(longKey(id), objWithId)
 
     // First save object then update indices
     saveResult map { _ =>
@@ -42,7 +43,7 @@ object Redis {
   def get[T <: Model[T] : SerializeStrategy : FastTypeTag : SPickler : Unpickler](id: Id): Future[Option[T]] = {
     val serializeStrategy = implicitly[SerializeStrategy[T]]
 
-    val objFuture: Future[Option[T]] = client.get(s"$applicationString:$id")
+    val objFuture: Future[Option[T]] = client.get(longKey(id))
 
     objFuture map (_ map serializeStrategy.enrichObject)
   }
@@ -50,36 +51,40 @@ object Redis {
   def delete[T <: Model[T] : SerializeStrategy](obj: T): Future[Boolean] = {
     val serializeStrategy = implicitly[SerializeStrategy[T]]
 
-    obj.id.fold {
-      Future.successful(false)
-    } { id =>
-      // First remove from indices, then remove children, then remove object
-      val indicesRemoval =
-        Future.sequence(
-          serializeStrategy.removalIndices(obj) map {
-            case (key, Some(id)) => updateIndex(key, id, remove = true)
-            case (key, None) => client.del(longIndexKey(key))
-          }
-        )
+    obj.id match {
+      case None =>
+        Future.successful(false)
+      case Some(id) =>
+        // First remove from indices, then remove children, then remove object
+        val indicesRemoval =
+          Future.sequence(
+            serializeStrategy.removalIndices(obj) map {
+              case (key, Some(id)) => updateIndex(key, id, remove = true)
+              case (key, None) => client.del(longKey(key))
+            }
+          )
 
-      indicesRemoval flatMap { _ =>
-        getIdsFromIndex(childrenKey(id)) map {
-          _ map {
-            childId => client.del(childId)
+        indicesRemoval flatMap { _ =>
+          getIdsFromIndex(childrenKey(id)) map {
+            _ map {
+              childId =>
+                client.del(longKey(childId)) map { _ =>
+                  updateDependency(id, childId, remove = true)
+                }
+            }
+          }
+
+          serializeStrategy.parents(obj) map (updateDependency(_, id, remove = true))
+
+          client.del(longKey(id)) map { keysRemoved =>
+            if (keysRemoved > 0) true else false
           }
         }
-
-        serializeStrategy.parents(obj) map (updateDependency(_, id, remove = true))
-
-        client.del(id) map { keysRemoved =>
-          if (keysRemoved > 0) true else false
-        }
-      }
     }
   }
 
   def getIdsFromIndex(indexKey: Key): Future[List[Id]] =
-    client.smembers[String](s"$applicationString:$indexKey") map (_.toList)
+    client.smembers[String](longKey(indexKey)) map (_.toList)
 
   implicit private def genericByteStringFormatter[T <: Model[T] : FastTypeTag : SPickler : Unpickler]: ByteStringFormatter[T] =
     new ByteStringFormatter[T] {
@@ -90,20 +95,19 @@ object Redis {
 
   private def updateIndex(indexKey: Key, id: Id, remove: Boolean): Future[Long] =
     if (remove)
-      client.srem(longIndexKey(indexKey), id)
+      client.srem(longKey(indexKey), id)
     else
-      client.sadd(longIndexKey(indexKey), id)
+      client.sadd(longKey(indexKey), id)
 
-  private def longIndexKey(indexKey: Key) = s"$applicationString:$indexKey"
-
-  private def updateDependency(parent: Id, id: Id, remove: Boolean = false): Future[Long] = {
-    val longKey = s"$applicationString:${childrenKey(parent)}"
-
+  private def updateDependency(parent: Id, id: Id, remove: Boolean = false): Future[Long] =
     if (remove)
-      client.srem(longKey, id)
+      client.srem(longKey(childrenKey(parent)), id)
     else
-      client.sadd(longKey, id)
-  }
+      client.sadd(longKey(childrenKey(parent)), id)
+
+  private def longKey(key: Key) = s"$applicationString:$key"
 
   private def childrenKey(parentId: Id): Key = s"$parentId:children"
 }
+
+object Redis extends Redis
