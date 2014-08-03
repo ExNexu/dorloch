@@ -3,6 +3,8 @@ package us.bleibinha.dorloch.data
 import akka.util.ByteString
 import redis.{ByteStringFormatter, RedisClient}
 import us.bleibinha.dorloch.model.{Id, Model}
+import play.api.Play.current
+import play.api.libs.concurrent.Akka.system
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -10,8 +12,7 @@ import scala.pickling._
 import scala.pickling.json._
 
 object Redis {
-  implicit val akkaSystem = akka.actor.ActorSystem()
-  val client = RedisClient()
+  private val client = RedisClient()(system)
   private val applicationString = "dorloch"
 
   def save[T <: Model[T] : FastTypeTag : SPickler : Unpickler](obj: T): Future[T] = {
