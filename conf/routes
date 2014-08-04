@@ -3,9 +3,11 @@
 # ~~~~
 
 # Home page
-GET        /                    us.bleibinha.dorloch.controller.Application.index
-GET        /project/:id         us.bleibinha.dorloch.controller.Application.project(id: String)
-GET        /task/:id            us.bleibinha.dorloch.controller.Application.task(id: String)
+GET         /                    controllers.Application.index
+GET         /project/:id         controllers.Application.project(id: String)
+GET         /task/:id            controllers.Application.task(id: String)
+POST        /project             controllers.Application.projectPost
+POST        /task                controllers.Application.taskPost(projectId: String)
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file        controllers.Assets.at(path="/public", file)
+GET         /assets/*file        controllers.Assets.at(path="/public", file)

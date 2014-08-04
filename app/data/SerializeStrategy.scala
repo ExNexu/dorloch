@@ -1,6 +1,6 @@
-package us.bleibinha.dorloch.data
+package data
 
-import us.bleibinha.dorloch.model._
+import model._
 
 trait SerializeStrategy[T <: Model[T]] {
   def indexUpdates(obj: T): List[(Key, Boolean)] = Nil

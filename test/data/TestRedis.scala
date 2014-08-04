@@ -1,4 +1,4 @@
-package us.bleibinha.dorloch.data
+package data
 
 import scala.concurrent._
 import scala.concurrent.duration._

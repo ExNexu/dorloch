@@ -1,4 +1,4 @@
-package us.bleibinha.dorloch.model
+package model
 
 case class Task(id: Option[Id], projectId: Id, title: String, description: Option[String]) extends Model[Task] {
   override def withId(id: Id): Task = copy(id = Some(id))

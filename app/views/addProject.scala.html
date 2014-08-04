@@ -1,0 +1,10 @@
+@import Application.ProjectUi
+@import helper._
+
+@(projectForm: Form[ProjectUi])
+
+@form(action = routes.Application.projectPost) {
+    @inputText(projectForm("title"))
+    @textarea(projectForm("description"))
+    <button type="submit">Save</button>
+}

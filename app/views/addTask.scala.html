@@ -1,0 +1,11 @@
+@import Application.TaskUi
+@import model.Id
+@import helper._
+
+@(projectId: Id, taskForm: Form[TaskUi])
+
+@form(action = routes.Application.taskPost(projectId)) {
+    @inputText(taskForm("title"))
+    @textarea(taskForm("description"))
+    <button type="submit">Save</button>
+}

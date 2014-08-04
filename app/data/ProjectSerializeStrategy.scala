@@ -1,7 +1,7 @@
-package us.bleibinha.dorloch.data
+package data
 
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import us.bleibinha.dorloch.model._
+import model._
 
 import scala.concurrent.Future
 import scala.pickling._

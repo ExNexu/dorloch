@@ -1,9 +1,9 @@
-package us.bleibinha.dorloch.data
+package data
 
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.play.OneAppPerSuite
-import us.bleibinha.dorloch.model.{Id, Project, Task}
-import us.bleibinha.dorloch.test.DorlochPlaySpec
+import model.{Id, Project, Task}
+import test.DorlochPlaySpec
 
 import scala.pickling._
 import scala.pickling.json._

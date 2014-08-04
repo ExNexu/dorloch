@@ -1,11 +1,11 @@
-package us.bleibinha.dorloch.data
+package data
 
 import akka.util.ByteString
 import play.api.Play.current
 import play.api.libs.concurrent.Akka.system
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import redis.{ByteStringFormatter, RedisClient}
-import us.bleibinha.dorloch.model.{Id, Model}
+import model.{Id, Model}
 
 import scala.concurrent.Future
 import scala.pickling._

@@ -1,7 +1,9 @@
-@import us.bleibinha.dorloch.model.Project
+@import model.Project
+@import Application.ProjectUi
 
-@(projects: List[Project])
+@(projects: List[Project], projectForm: Form[ProjectUi])
 
 @main("Dorloch") {
     @listProjects(projects)
+    @addProject(projectForm)
 }

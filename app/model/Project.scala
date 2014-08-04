@@ -1,4 +1,4 @@
-package us.bleibinha.dorloch.model
+package model
 
 import scala.concurrent.Future
 

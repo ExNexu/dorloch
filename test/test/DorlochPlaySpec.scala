@@ -1,7 +1,6 @@
-package us.bleibinha.dorloch.test
+package test
 
 import org.scalatestplus.play.PlaySpec
-import play.api.test.FakeApplication
 
 import scala.concurrent._
 import scala.concurrent.duration._

@@ -1,6 +1,6 @@
-package us.bleibinha.dorloch.data
+package data
 
-import us.bleibinha.dorloch.model._
+import model._
 
 object TaskSerializeStrategy extends SerializeStrategy[Task] {
   override def indexUpdates(obj: Task): List[(Key, Boolean)] = {

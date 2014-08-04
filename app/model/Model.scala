@@ -1,4 +1,4 @@
-package us.bleibinha.dorloch.model
+package model
 
 trait Model[T] {
   def id: Option[Id]

@@ -1,11 +1,14 @@
-@import us.bleibinha.dorloch.model.Project
+@import Application.TaskUi
+@import model._
 
-@(project: Project)
+@(project: Project, tasks: List[Task], taskForm: Form[TaskUi])
 
 @main(project.title) {
     <ul>
         <h1><a href="/project/@project.id">@project.title (@project.id)</a></h1>
         <span>@project.description</span>
         <h2>Tasks</h2>
+        @listTasks(tasks)
+        @addTask(project.id.get, taskForm)
     </ul>
 }

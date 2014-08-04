@@ -1,8 +1,9 @@
-@import us.bleibinha.dorloch.model.Task
+@import model.Task
 
 @(task: Task)
 
 @main(task.title) {
+    <a href="/project/@task.projectId">Project</a>
     <ul>
         <h1><a href="/task/@task.id">@task.title (@task.id)</a></h1>
         <span>@task.description</span>
