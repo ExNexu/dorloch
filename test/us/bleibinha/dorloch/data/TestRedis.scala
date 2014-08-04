@@ -10,5 +10,5 @@ class TestRedis extends Redis {
   val redisClient = client
 
   //remove all previous test keys
-  Await.result(client.keys(s"$applicationString*") map client.del, 2 seconds)
+  Await.result(client.keys(s"$applicationString*") flatMap client.del, 2 seconds)
 }
