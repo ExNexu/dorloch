@@ -12,7 +12,7 @@ trait SerializeStrategy[T <: Model[T]] {
 
   def parents(obj: T): List[Id] = Nil
 
-  def preSerialize(obj: T, redis: Redis) = obj
+  def postSerialize(obj: T, redis: Redis) = obj
 
   def postDeserialize(obj: T, redis: Redis) = obj
 }

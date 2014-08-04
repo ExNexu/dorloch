@@ -12,8 +12,14 @@ object ProjectSerializeStrategy extends SerializeStrategy[Project] {
   override def removalIndices(obj: Project): List[(Key, Option[Id])] =
     (tasksKey(obj.id.get), None) :: Nil
 
-  override def postDeserialize(obj: Project, redis: Redis): Project = {
-    val id = obj.id.get
+  override def postSerialize(obj: Project, redis: Redis): Project = enrichProject(obj, redis)
+
+  override def postDeserialize(obj: Project, redis: Redis): Project = enrichProject(obj, redis)
+
+  def tasksKey(projectId: Id): Key = s"$projectId:tasks"
+
+  private def enrichProject(proj: Project, redis: Redis): Project = {
+    val id = proj.id.get
 
     def tasksFn: Future[List[Task]] = {
       val taskIds = redis.getIdsFromIndex(tasksKey(id))
@@ -27,8 +33,6 @@ object ProjectSerializeStrategy extends SerializeStrategy[Project] {
 
     def activeTasksFn: Future[List[Task]] = Future.successful(Nil)
 
-    Project(obj, tasksFn, activeTasksFn)
+    Project(proj, tasksFn, activeTasksFn)
   }
-
-  def tasksKey(projectId: Id): Key = s"$projectId:tasks"
 }

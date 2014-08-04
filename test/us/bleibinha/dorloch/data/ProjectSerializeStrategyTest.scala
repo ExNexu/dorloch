@@ -66,5 +66,32 @@ class ProjectSerializeStrategyTest extends DorlochPlaySpec with OneAppPerSuite w
 
       awaitFuture(testRedis.delete(project))
     }
+
+    "be accessible via getAll" in {
+      val project = awaitFuture(testRedis.save(Project("")))
+      val projectId = project.id.get
+      val typeTag = implicitly[FastTypeTag[Project]]
+      val typeFullName = typeTag.tpe.typeSymbol.fullName
+
+      eventually {
+        val projectAllIdsLongKey = s"${testRedis.testApplicationString}:$typeFullName:all"
+        val projectAllIds = awaitFuture(testRedis.redisClient.smembers[String](projectAllIdsLongKey))
+        projectAllIds must be(Seq(projectId))
+
+        val allProjects = awaitFuture(testRedis.getAll[Project])
+        allProjects map (_.id) must be(List(Some(projectId)))
+      }
+
+      awaitFuture(testRedis.delete(project))
+
+      eventually {
+        val projectAllIdsLongKey = s"${testRedis.testApplicationString}:$typeFullName:all"
+        val projectAllIds = awaitFuture(testRedis.redisClient.smembers[String](projectAllIdsLongKey))
+        projectAllIds must be(Seq())
+
+        val allProjects = awaitFuture(testRedis.getAll[Project])
+        allProjects map (_.id) must be(List())
+      }
+    }
   }
 }

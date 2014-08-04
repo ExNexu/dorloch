@@ -17,29 +17,30 @@ trait Redis {
   protected val client = RedisClient()
 
   def save[T <: Model[T] : SerializeStrategy : FastTypeTag : SPickler : Unpickler](obj: T): Future[T] = {
+    val typeTag = implicitly[FastTypeTag[T]]
+    val typeFullName = typeTag.tpe.typeSymbol.fullName
     val serializeStrategy = implicitly[SerializeStrategy[T]]
 
-    val processedObj = serializeStrategy.preSerialize(obj, this)
-
-    val objWithId: T = processedObj.id.fold {
+    val objWithId: T = obj.id.fold {
       val newId = java.util.UUID.randomUUID.toString
-      processedObj.withId(newId)
+      obj.withId(newId)
     } {
-      _ => processedObj
+      _ => obj
     }
     val id = objWithId.id.get
 
     val saveResult = client.set(longKey(id), objWithId)
 
-    // First save object then update indices
+    // First save object, then update indices, then add to all list
     saveResult map { _ =>
       serializeStrategy.indexUpdates(obj) map {
         case (key, remove) => updateIndex(key, id, remove)
       }
       serializeStrategy.parents(obj).map(updateDependency(_, id))
+      updateIndex(allKey(typeFullName), id)
     }
 
-    saveResult map (_ => objWithId)
+    saveResult map (_ => serializeStrategy.postSerialize(objWithId, this))
   }
 
   def get[T <: Model[T] : SerializeStrategy : FastTypeTag : SPickler : Unpickler](id: Id): Future[Option[T]] = {
@@ -50,7 +51,23 @@ trait Redis {
     objFuture map (_ map (serializeStrategy.postDeserialize(_, this)))
   }
 
-  def delete[T <: Model[T] : SerializeStrategy](obj: T): Future[Boolean] = {
+  def getAll[T <: Model[T] : SerializeStrategy : FastTypeTag : SPickler : Unpickler]: Future[List[T]] = {
+    val typeTag = implicitly[FastTypeTag[T]]
+    val typeFullName = typeTag.tpe.typeSymbol.fullName
+    val serializeStrategy = implicitly[SerializeStrategy[T]]
+
+    val allIds = getIdsFromIndex(allKey(typeFullName))
+    allIds flatMap { allIds =>
+      val objOptions = Future.traverse(allIds) { id =>
+        get[T](id) map (_ map (serializeStrategy.postDeserialize(_, this)))
+      }
+      objOptions map (_.flatten)
+    }
+  }
+
+  def delete[T <: Model[T] : SerializeStrategy : FastTypeTag](obj: T): Future[Boolean] = {
+    val typeTag = implicitly[FastTypeTag[T]]
+    val typeFullName = typeTag.tpe.typeSymbol.fullName
     val serializeStrategy = implicitly[SerializeStrategy[T]]
 
     obj.id match {
@@ -61,25 +78,28 @@ trait Redis {
         val indicesRemoval =
           Future.sequence(
             serializeStrategy.removalIndices(obj) map {
-              case (key, Some(id)) => updateIndex(key, id, remove = true)
+              case (key, Some(removalId)) => updateIndex(key, removalId, remove = true)
               case (key, None) => client.del(longKey(key))
             }
           )
+        val allRemoval = updateIndex(allKey(typeFullName), id, remove = true)
 
         indicesRemoval flatMap { _ =>
-          getIdsFromIndex(childrenKey(id)) map {
-            _ map {
-              childId =>
-                client.del(longKey(childId)) map { _ =>
-                  updateDependency(id, childId, remove = true)
-                }
+          allRemoval flatMap { _ =>
+            getIdsFromIndex(childrenKey(id)) map {
+              _ map {
+                childId =>
+                  client.del(longKey(childId)) map { _ =>
+                    updateDependency(id, childId, remove = true)
+                  }
+              }
             }
-          }
 
-          serializeStrategy.parents(obj) map (updateDependency(_, id, remove = true))
+            serializeStrategy.parents(obj) map (updateDependency(_, id, remove = true))
 
-          client.del(longKey(id)) map { keysRemoved =>
-            if (keysRemoved > 0) true else false
+            client.del(longKey(id)) map { keysRemoved =>
+              if (keysRemoved > 0) true else false
+            }
           }
         }
     }
@@ -95,7 +115,7 @@ trait Redis {
       override def serialize(data: T): ByteString = ByteString(data.pickle.value)
     }
 
-  private def updateIndex(indexKey: Key, id: Id, remove: Boolean): Future[Long] =
+  private def updateIndex(indexKey: Key, id: Id, remove: Boolean = false): Future[Long] =
     if (remove)
       client.srem(longKey(indexKey), id)
     else
@@ -110,6 +130,8 @@ trait Redis {
   private def longKey(key: Key) = s"$applicationString:$key"
 
   private def childrenKey(parentId: Id): Key = s"$parentId:children"
+
+  private def allKey(className: String): Key = s"$className:all"
 }
 
 object Redis extends Redis
