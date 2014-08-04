@@ -12,12 +12,9 @@ trait SerializeStrategy[T <: Model[T]] {
 
   def parents(obj: T): List[Id] = Nil
 
-  def enrichObject(obj: T) = obj
-}
+  def preSerialize(obj: T, redis: Redis) = obj
 
-object SerializeStrategy {
-  implicit val projectSerializeStrategy = new ProjectSerializeStrategy(Redis)
-  implicit val taskSerializeStrategy = new TaskSerializeStrategy(projectSerializeStrategy)
+  def postDeserialize(obj: T, redis: Redis) = obj
 }
 
 

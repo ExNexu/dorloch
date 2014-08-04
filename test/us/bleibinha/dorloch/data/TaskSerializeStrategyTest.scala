@@ -8,9 +8,9 @@ import us.bleibinha.dorloch.test.DorlochPlaySpec
 import scala.pickling._
 import scala.pickling.json._
 
-class TaskSerializeStrategyTest extends DorlochPlaySpec with TestSerializeStrategy with OneAppPerSuite with Eventually {
+class TaskSerializeStrategyTest extends DorlochPlaySpec with OneAppPerSuite with Eventually {
 
-  override lazy val testRedis = new TestRedis
+  lazy val testRedis = new TestRedis
 
   "A task" should {
 

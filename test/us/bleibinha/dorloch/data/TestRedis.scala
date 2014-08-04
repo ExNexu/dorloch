@@ -5,9 +5,3 @@ class TestRedis extends Redis {
   val testApplicationString = applicationString
   val redisClient = client
 }
-
-trait TestSerializeStrategy {
-  def testRedis: Redis
-  implicit lazy val projectSerializeStrategy = new ProjectSerializeStrategy(testRedis)
-  implicit lazy val taskSerializeStrategy = new TaskSerializeStrategy(projectSerializeStrategy)
-}

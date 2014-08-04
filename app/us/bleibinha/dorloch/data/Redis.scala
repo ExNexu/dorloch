@@ -19,11 +19,13 @@ trait Redis {
   def save[T <: Model[T] : SerializeStrategy : FastTypeTag : SPickler : Unpickler](obj: T): Future[T] = {
     val serializeStrategy = implicitly[SerializeStrategy[T]]
 
-    val objWithId: T = obj.id.fold {
+    val processedObj = serializeStrategy.preSerialize(obj, this)
+
+    val objWithId: T = processedObj.id.fold {
       val newId = java.util.UUID.randomUUID.toString
-      obj.withId(newId)
+      processedObj.withId(newId)
     } {
-      _ => obj
+      _ => processedObj
     }
     val id = objWithId.id.get
 
@@ -45,7 +47,7 @@ trait Redis {
 
     val objFuture: Future[Option[T]] = client.get(longKey(id))
 
-    objFuture map (_ map serializeStrategy.enrichObject)
+    objFuture map (_ map (serializeStrategy.postDeserialize(_, this)))
   }
 
   def delete[T <: Model[T] : SerializeStrategy](obj: T): Future[Boolean] = {

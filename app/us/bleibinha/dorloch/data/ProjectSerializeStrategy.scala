@@ -7,12 +7,12 @@ import scala.concurrent.Future
 import scala.pickling._
 import scala.pickling.json._
 
-class ProjectSerializeStrategy(redis: Redis) extends SerializeStrategy[Project] {
+object ProjectSerializeStrategy extends SerializeStrategy[Project] {
 
   override def removalIndices(obj: Project): List[(Key, Option[Id])] =
     (tasksKey(obj.id.get), None) :: Nil
 
-  override def enrichObject(obj: Project): Project = {
+  override def postDeserialize(obj: Project, redis: Redis): Project = {
     val id = obj.id.get
 
     def tasksFn: Future[List[Task]] = {
